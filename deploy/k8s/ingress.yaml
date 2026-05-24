@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skills-hub
+spec:
+  rules:
+    - host: skills-hub.company.local
+      http:
+        paths:
+          - path: /api
+            pathType: Exact
+            backend:
+              service:
+                name: skills-hub-api
+                port:
+                  number: 8080
+          - path: /api/skills
+            pathType: Prefix
+            backend:
+              service:
+                name: skills-hub-api
+                port:
+                  number: 8080
+          - path: /healthz
+            pathType: Exact
+            backend:
+              service:
+                name: skills-hub-api
+                port:
+                  number: 8080
+          - path: /readyz
+            pathType: Exact
+            backend:
+              service:
+                name: skills-hub-api
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: skills-hub-web
+                port:
+                  number: 80

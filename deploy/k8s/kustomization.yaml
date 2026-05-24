@@ -1,0 +1,8 @@
+resources:
+  - configmap.yaml
+  - api.yaml
+  - web.yaml
+  - ingress.yaml
+
+# Copy secret.example.yaml to secret.yaml, fill real values, then add it here:
+# - secret.yaml

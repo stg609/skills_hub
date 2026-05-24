@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skills-hub-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skills-hub-web
+  template:
+    metadata:
+      labels:
+        app: skills-hub-web
+    spec:
+      containers:
+        - name: web
+          image: skills-hub-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skills-hub-web
+spec:
+  selector:
+    app: skills-hub-web
+  ports:
+    - port: 80
+      targetPort: 80

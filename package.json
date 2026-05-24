@@ -1,0 +1,17 @@
+{
+  "name": "skills-hub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "dotnet build apps/api/SkillsHub.Api.csproj && npm --workspace apps/web run build",
+    "test": "node --test",
+    "dev:frontend": "npm --workspace apps/web run dev",
+    "dev:backend": "dotnet run --project apps/api/SkillsHub.Api.csproj --urls http://127.0.0.1:5000",
+    "migrate": "dotnet run --project apps/api/SkillsHub.Api.csproj -- --migrate"
+  },
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ]
+}

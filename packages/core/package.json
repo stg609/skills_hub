@@ -1,0 +1,13 @@
+{
+  "name": "@skills-hub/core",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./catalog": "./src/catalog.js",
+    "./gitlab-discovery": "./src/gitlab-discovery.js",
+    "./gitlab-indexer": "./src/gitlab-indexer.js",
+    "./package-policy": "./src/package-policy.js",
+    "./sync": "./src/sync.js",
+    "./skill-parser": "./src/skill-parser.js"
+  }
+}

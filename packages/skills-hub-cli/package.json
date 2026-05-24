@@ -1,0 +1,8 @@
+{
+  "name": "@company/skills-hub",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "skills-hub": "./src/cli.js"
+  }
+}
