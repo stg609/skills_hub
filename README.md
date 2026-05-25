@@ -117,27 +117,40 @@ Open `http://localhost:5173`.
 
 ## Environment
 
-Copy `.env.example` and fill company values:
+`.env.example` is a reference file only. The API does not automatically load `.env`; set these values as process environment variables locally, or put them into Kubernetes `Secret` / `ConfigMap`.
 
 ```bash
 copy .env.example .env
 ```
 
-Important variables:
+API secret variables, put in Kubernetes `Secret`:
 
 - `DATABASE_URL`
-- `GITLAB_BASE_URL`
 - `GITLAB_TOKEN`
+- `INTERNAL_SYNC_TOKEN`
+
+API non-secret variables, put in Kubernetes `ConfigMap`:
+
+- `GITLAB_BASE_URL`
 - `GITLAB_GROUPS`
 - `GITLAB_SCAN_ALL_PROJECTS` - set to `true` to scan all projects visible to the token instead of configured groups.
 - `GITLAB_RECURSIVE_SKILL_DISCOVERY` - default `false`; set to `true` only if skills live in subdirectories and GitLab can handle recursive tree scans.
-- `INTERNAL_SYNC_TOKEN`
+- `GITLAB_SYNC_ENABLED`
+- `WEB_ORIGIN` - CORS origin allowed by the API.
 - `PG_POOL_MAX`
 - `MAX_PACKAGE_FILES`
 - `MAX_PACKAGE_BYTES`
 - `MAX_CONCURRENT_PACKAGE_BUILDS`
+- `GITLAB_REQUEST_TIMEOUT_MS`
+- `GITLAB_REQUEST_RETRIES`
+- `SYNC_LOCK_TTL_SECONDS`
 - `HUB_PUBLIC_URL`
 - `WRAPPER_PACKAGE_NAME`
+
+Frontend variables:
+
+- None are required today. The React app calls relative `/api/*` paths and is configured through Nginx / Ingress, not browser env vars.
+- If frontend env vars are added later, they must be prefixed with `VITE_` to be exposed by Vite.
 
 `GITLAB_TOKEN` and `INTERNAL_SYNC_TOKEN` are different secrets:
 
