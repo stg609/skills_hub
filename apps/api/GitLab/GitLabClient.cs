@@ -59,12 +59,24 @@ public sealed class GitLabClient
         }
     }
 
-    public async Task<IReadOnlyList<GitLabTreeItem>> ListRepositoryTreeAsync(long projectId, string reference, string path, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<GitLabProject> EnumerateAccessibleProjectsAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        for (var page = 1; ; page++)
+        {
+            var batch = await GetJsonAsync<List<GitLabProject>>(
+                $"api/v4/projects?membership=true&simple=true&per_page=100&page={page}",
+                cancellationToken);
+            foreach (var project in batch) yield return project;
+            if (batch.Count < 100) break;
+        }
+    }
+
+    public async Task<IReadOnlyList<GitLabTreeItem>> ListRepositoryTreeAsync(long projectId, string reference, string path, bool recursive, CancellationToken cancellationToken)
     {
         var items = new List<GitLabTreeItem>();
         for (var page = 1; ; page++)
         {
-            var query = $"recursive=true&per_page=100&page={page}&ref={Uri.EscapeDataString(reference)}";
+            var query = $"recursive={recursive.ToString().ToLowerInvariant()}&per_page=100&page={page}&ref={Uri.EscapeDataString(reference)}";
             if (!string.IsNullOrWhiteSpace(path)) query += $"&path={Uri.EscapeDataString(path)}";
             var batch = await GetJsonAsync<List<GitLabTreeItem>>(
                 $"api/v4/projects/{projectId}/repository/tree?{query}",
@@ -75,11 +87,11 @@ public sealed class GitLabClient
         return items;
     }
 
-    public async IAsyncEnumerable<GitLabTreeItem> EnumerateRepositoryTreeAsync(long projectId, string reference, string path, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<GitLabTreeItem> EnumerateRepositoryTreeAsync(long projectId, string reference, string path, bool recursive, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         for (var page = 1; ; page++)
         {
-            var query = $"recursive=true&per_page=100&page={page}&ref={Uri.EscapeDataString(reference)}";
+            var query = $"recursive={recursive.ToString().ToLowerInvariant()}&per_page=100&page={page}&ref={Uri.EscapeDataString(reference)}";
             if (!string.IsNullOrWhiteSpace(path)) query += $"&path={Uri.EscapeDataString(path)}";
             var batch = await GetJsonAsync<List<GitLabTreeItem>>(
                 $"api/v4/projects/{projectId}/repository/tree?{query}",

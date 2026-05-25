@@ -134,7 +134,7 @@ public sealed class SkillsService(
         await _packageBuilds.WaitAsync(cancellationToken);
         try
         {
-            var tree = await gitlab.ListRepositoryTreeAsync(skill.Source.ProjectId, skill.Source.DefaultBranch, skill.Source.SkillDir == "." ? "" : skill.Source.SkillDir, cancellationToken);
+            var tree = await gitlab.ListRepositoryTreeAsync(skill.Source.ProjectId, skill.Source.DefaultBranch, skill.Source.SkillDir == "." ? "" : skill.Source.SkillDir, true, cancellationToken);
             var entries = packageBuilder.BuildEntries(skill, tree, config);
             var archiveFiles = new Dictionary<string, byte[]>(StringComparer.Ordinal);
             var remainingBytes = config.MaxPackageBytes;

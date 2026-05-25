@@ -55,6 +55,8 @@ Important variables:
 - `GITLAB_BASE_URL`
 - `GITLAB_TOKEN`
 - `GITLAB_GROUPS`
+- `GITLAB_SCAN_ALL_PROJECTS` - set to `true` to scan all projects visible to the token instead of configured groups.
+- `GITLAB_RECURSIVE_SKILL_DISCOVERY` - default `false`; set to `true` only if skills live in subdirectories and GitLab can handle recursive tree scans.
 - `INTERNAL_SYNC_TOKEN`
 - `PG_POOL_MAX`
 - `MAX_PACKAGE_FILES`

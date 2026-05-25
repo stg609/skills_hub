@@ -12,6 +12,8 @@ API:
 - `GITLAB_BASE_URL`
 - `GITLAB_TOKEN`
 - `GITLAB_GROUPS`
+- `GITLAB_SCAN_ALL_PROJECTS=false`
+- `GITLAB_RECURSIVE_SKILL_DISCOVERY=false`
 - `INTERNAL_SYNC_TOKEN`
 - `PG_POOL_MAX=5`
 - `WEB_ORIGIN`
@@ -20,6 +22,12 @@ Web:
 
 - Serve the built `apps/web/dist` as static files.
 - Route `/api/*` to the API service through ingress or reverse proxy.
+
+GitLab scope:
+
+- Prefer `GITLAB_GROUPS=group-a,group-b` for predictable sync scope.
+- Set `GITLAB_SCAN_ALL_PROJECTS=true` only when the Hub should scan every project visible to the token. The implementation uses GitLab `membership=true`, so it does not intentionally scan projects outside the token's memberships.
+- Keep `GITLAB_RECURSIVE_SKILL_DISCOVERY=false` when GitLab resources are tight. In this mode sync only checks the repository root for `SKILL.md`; no repository clone is performed. Set it to `true` only when your skill repositories intentionally store skills in subdirectories.
 
 ## Resource Starting Point
 

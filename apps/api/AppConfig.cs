@@ -6,6 +6,8 @@ public sealed record AppConfig(
     string GitLabBaseUrl,
     string GitLabToken,
     IReadOnlyList<string> GitLabGroups,
+    bool GitLabScanAllProjects,
+    bool GitLabRecursiveSkillDiscovery,
     bool GitLabSyncEnabled,
     int GitLabRequestTimeoutMs,
     int GitLabRequestRetries,
@@ -27,6 +29,8 @@ public sealed record AppConfig(
             Env("GITLAB_BASE_URL") ?? section.GetValue("GitLabBaseUrl", "https://gitlab.company.local")!,
             Env("GITLAB_TOKEN") ?? "",
             SplitList(Env("GITLAB_GROUPS")) ?? section.GetSection("GitLabGroups").Get<string[]>() ?? [],
+            Bool("GITLAB_SCAN_ALL_PROJECTS", section.GetValue("GitLabScanAllProjects", false)),
+            Bool("GITLAB_RECURSIVE_SKILL_DISCOVERY", section.GetValue("GitLabRecursiveSkillDiscovery", false)),
             (Env("GITLAB_SYNC_ENABLED") ?? section.GetValue("GitLabSyncEnabled", true).ToString()) != "false",
             PositiveInt("GITLAB_REQUEST_TIMEOUT_MS", section.GetValue("GitLabRequestTimeoutMs", 10_000)),
             PositiveInt("GITLAB_REQUEST_RETRIES", section.GetValue("GitLabRequestRetries", 2)),
@@ -46,6 +50,13 @@ public sealed record AppConfig(
         string.IsNullOrWhiteSpace(value)
             ? null
             : value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static bool Bool(string name, bool fallback)
+    {
+        var raw = Env(name);
+        if (string.IsNullOrWhiteSpace(raw)) return fallback;
+        return raw.Equals("true", StringComparison.OrdinalIgnoreCase) || raw == "1";
+    }
 
     private static int PositiveInt(string name, int fallback)
     {
