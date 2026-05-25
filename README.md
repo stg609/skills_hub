@@ -41,6 +41,80 @@ npm run dev:frontend
 
 The Vite dev server proxies `/api` to `http://127.0.0.1:5000`.
 
+## Local GitLab Index Test
+
+Use this flow when testing against a real company GitLab group from your machine.
+
+1. If PostgreSQL is inside Kubernetes, forward it to localhost:
+
+```powershell
+kubectl port-forward -n postgres-dev svc/postgres 5432:5432
+```
+
+2. In a new PowerShell window, set environment variables:
+
+```powershell
+$env:DATABASE_URL="Host=127.0.0.1;Port=5432;Database=skills_hub_module;Username=postgres;Password=<password>"
+$env:GITLAB_BASE_URL="https://gitlab.company.local"
+$env:GITLAB_TOKEN="<gitlab-read-token>"
+$env:GITLAB_GROUPS="your-group-path"
+$env:GITLAB_SCAN_ALL_PROJECTS="false"
+$env:GITLAB_RECURSIVE_SKILL_DISCOVERY="false"
+$env:INTERNAL_SYNC_TOKEN="dev-sync-token"
+$env:WEB_ORIGIN="http://localhost:5173"
+```
+
+`GITLAB_GROUPS` must be the GitLab group path, not the display name. For a subgroup, use a slash path such as `platform/agent-skills`.
+
+Keep `GITLAB_RECURSIVE_SKILL_DISCOVERY=false` when GitLab resources are tight. In this mode the sync only checks each project's repository root for `SKILL.md`; it does not clone repositories and does not recursively scan all files. Set it to `true` only when skills intentionally live in subdirectories such as `some-skill/SKILL.md`.
+
+3. Apply migrations:
+
+```powershell
+npm run migrate
+```
+
+4. Start the API:
+
+```powershell
+dotnet run --project apps/api/SkillsHub.Api.csproj --urls http://127.0.0.1:5000
+```
+
+5. Trigger GitLab indexing manually from another PowerShell window:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:5000/api/internal/sync/gitlab" `
+  -Method Post `
+  -Headers @{ "x-internal-sync-token" = "dev-sync-token" } |
+  ConvertTo-Json -Depth 5
+```
+
+6. Check sync status:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:5000/api/internal/sync/status" `
+  -Headers @{ "x-internal-sync-token" = "dev-sync-token" } |
+  ConvertTo-Json -Depth 5
+```
+
+7. Check indexed skills:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:5000/api/skills?page=1&pageSize=30" |
+  ConvertTo-Json -Depth 8
+```
+
+8. Start the frontend:
+
+```powershell
+npm run dev:frontend
+```
+
+Open `http://localhost:5173`.
+
 ## Environment
 
 Copy `.env.example` and fill company values:
@@ -64,6 +138,11 @@ Important variables:
 - `MAX_CONCURRENT_PACKAGE_BUILDS`
 - `HUB_PUBLIC_URL`
 - `WRAPPER_PACKAGE_NAME`
+
+`GITLAB_TOKEN` and `INTERNAL_SYNC_TOKEN` are different secrets:
+
+- `GITLAB_TOKEN` is sent to GitLab. It should belong to a dedicated bot user with the minimum GitLab role/scope required to read configured projects, typically `Reporter` plus `read_api` and `read_repository`.
+- `INTERNAL_SYNC_TOKEN` is only checked by this Hub API. It protects internal Hub endpoints such as `/api/internal/sync/gitlab`, `/api/internal/sync/status`, and `/api/internal/stats/rebuild`. It is not sent to GitLab. For local testing, any strong random string works; `dev-sync-token` is just an example.
 
 ## Database
 
