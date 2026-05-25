@@ -241,7 +241,7 @@ select {
 }
 .skill-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) 132px 132px 112px 72px;
+  grid-template-columns: minmax(0, 1fr) 132px 112px 72px;
   align-items: stretch;
   border: 2px solid var(--line);
   background: rgba(255,250,240,.74);
@@ -260,6 +260,38 @@ select {
 .source-dot { width: 13px; height: 13px; border: 2px solid var(--line); flex: 0 0 auto; }
 .skill-name h3 { margin: 0; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
 .skill-main p { margin: 0; font-size: 13px; }
+.skill-row .skill-main p {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.skill-list.grid-view {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.grid-view .skill-row {
+  min-height: 220px;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto auto;
+}
+
+.grid-view .skill-row .skill-main {
+  min-height: 136px;
+}
+
+.grid-view .cell {
+  border-left: 0;
+  border-top: 2px solid var(--line);
+  min-height: 54px;
+}
+
+.grid-view .row-action {
+  border-left: 0;
+  border-top: 2px solid var(--line);
+  min-height: 48px;
+}
 
 .cell {
   border-left: 2px solid var(--line);
@@ -332,6 +364,11 @@ select {
 }
 .drawer h2 { margin: 14px 0 10px; font-size: 25px; line-height: 1.1; overflow-wrap: anywhere; }
 .drawer p { color: rgba(255,250,240,.76); line-height: 1.55; margin: 0; }
+.detail-description {
+  max-height: 178px;
+  overflow: auto;
+  padding-right: 8px;
+}
 .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
 .tag { border: 1px solid rgba(255,250,240,.58); padding: 5px 8px; font-family: "JetBrains Mono", "Cascadia Mono", monospace; font-size: 11px; }
 
@@ -357,7 +394,7 @@ select {
 }
 .command.subtle { opacity: .78; }
 
-.drawer-actions { display: grid; grid-template-columns: 1fr 54px 54px; gap: 10px; }
+.drawer-actions { display: grid; grid-template-columns: 1fr 54px 54px 54px; gap: 10px; }
 .primary {
   min-height: 48px;
   border: 2px solid var(--paper-hot);
@@ -377,6 +414,8 @@ select {
 
 .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
 .meta { border: 1px solid rgba(255,250,240,.38); padding: 11px; }
+.link-meta { color: var(--paper-hot); text-decoration: none; }
+.link-meta:hover { background: rgba(183,255,42,.1); }
 .meta span { display: block; color: rgba(255,250,240,.55); font-size: 11px; margin-bottom: 6px; }
 .meta strong { font-size: 13px; overflow-wrap: anywhere; }
 
@@ -401,7 +440,7 @@ select {
   main { padding: 24px 24px 46px; }
   .headline h2 { font-size: clamp(34px, 7vw, 56px); }
   .controls { grid-template-columns: minmax(220px, 1fr) 180px 104px; }
-  .skill-row { grid-template-columns: minmax(0, 1fr) 118px 118px 84px 56px; }
+  .skill-row { grid-template-columns: minmax(0, 1fr) 118px 84px 56px; }
   .drawer {
     position: fixed;
     right: 18px;
@@ -440,6 +479,7 @@ select {
   .search,
   select { border-right: 0; border-bottom: 2px solid var(--line); }
   .skill-row { grid-template-columns: 1fr; }
+  .skill-list.grid-view { grid-template-columns: 1fr; }
   .cell,
   .row-action { border-left: 0; border-top: 2px solid var(--line); }
   .drawer {

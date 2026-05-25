@@ -8,6 +8,7 @@ type Skill = {
   description: string;
   category: string;
   repoPath: string;
+  repoUrl: string;
   updatedAt: string;
   updatedLabel: string;
   installCommand: string;
@@ -28,6 +29,7 @@ const skills: Skill[] = [
     description: "Pull request review, CI failure triage, and risky diff inspection for coding agents.",
     category: "默认分类",
     repoPath: "agent-skills/dev-quality/codex-review-pack",
+    repoUrl: "git@gitlab.company.local:agent-skills/dev-quality.git",
     updatedAt: "2026-05-23T09:18:00+08:00",
     updatedLabel: "今天 09:18",
     installCommand: "npx skills add git@gitlab.company.local:agent-skills/dev-quality.git --skill codex-review-pack",
@@ -42,6 +44,7 @@ const skills: Skill[] = [
     description: "Opinionated UI critique prompts, layout heuristics, and visual QA checklists.",
     category: "默认分类",
     repoPath: "agent-skills/product/frontend-taste-lab",
+    repoUrl: "git@gitlab.company.local:agent-skills/product.git",
     updatedAt: "2026-05-22T17:42:00+08:00",
     updatedLabel: "昨天 17:42",
     installCommand: "npx skills add git@gitlab.company.local:agent-skills/product.git --skill frontend-taste-lab",
@@ -56,6 +59,7 @@ const skills: Skill[] = [
     description: "Chinese meeting transcript cleanup, summary extraction, and action item formatting.",
     category: "默认分类",
     repoPath: "agent-skills/workflow/meeting-notes-zh",
+    repoUrl: "git@gitlab.company.local:agent-skills/workflow.git",
     updatedAt: "2026-05-21T11:06:00+08:00",
     updatedLabel: "5月21日",
     installCommand: "npx skills add git@gitlab.company.local:agent-skills/workflow.git --skill meeting-notes-zh",
@@ -70,6 +74,7 @@ const skills: Skill[] = [
     description: "Debugging recipes for Tauri, Rust integration tests, Windows audio, and recovery flows.",
     category: "默认分类",
     repoPath: "agent-skills/native/rust-tauri-repair",
+    repoUrl: "git@gitlab.company.local:agent-skills/native.git",
     updatedAt: "2026-05-19T15:30:00+08:00",
     updatedLabel: "5月19日",
     installCommand: "npx skills add git@gitlab.company.local:agent-skills/native.git --skill rust-tauri-repair",
@@ -89,6 +94,7 @@ function App() {
   const [total, setTotal] = React.useState(initialCatalog.length);
   const [selectedSlug, setSelectedSlug] = React.useState(initialCatalog[0]?.slug ?? "");
   const [likedSlugs, setLikedSlugs] = React.useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = React.useState<"list" | "grid">("list");
   const [toast, setToast] = React.useState("");
   const [loadError, setLoadError] = React.useState("");
 
@@ -141,7 +147,7 @@ function App() {
 
   async function copyCommand() {
     if (!selected) return;
-    await navigator.clipboard.writeText(selected.trackedInstallCommand || selected.installCommand);
+    await navigator.clipboard.writeText(selected.installCommand);
     void fetch(`/api/skills/${selected.slug}/install`, { method: "POST" }).catch(() => undefined);
     flash("安装命令已复制");
   }
@@ -182,6 +188,11 @@ function App() {
   function downloadZip() {
     if (!selected) return;
     window.open(`/api/skills/${selected.slug}/download`, "_blank", "noopener,noreferrer");
+  }
+
+  function openGitLab() {
+    if (!selected) return;
+    window.open(gitLabWebUrl(selected.repoUrl, selected.repoPath), "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -237,12 +248,12 @@ function App() {
             <option value="downloads_all">所有下载次数</option>
           </select>
           <div className="view-toggle" aria-label="视图切换">
-            <button className="icon-btn active" type="button" aria-label="列表视图"><ListIcon /></button>
-            <button className="icon-btn" type="button" aria-label="紧凑视图"><GridIcon /></button>
+            <button className={`icon-btn ${viewMode === "list" ? "active" : ""}`} onClick={() => setViewMode("list")} type="button" aria-label="列表视图"><ListIcon /></button>
+            <button className={`icon-btn ${viewMode === "grid" ? "active" : ""}`} onClick={() => setViewMode("grid")} type="button" aria-label="窗格视图"><GridIcon /></button>
           </div>
         </section>
 
-        <section className="skill-list" aria-label="Skill 列表">
+        <section className={`skill-list ${viewMode === "grid" ? "grid-view" : ""}`} aria-label="Skill 列表">
           {loadError && <div className="empty-state">{loadError}</div>}
           {!loadError && filteredSkills.length === 0 && <div className="empty-state">没有找到匹配的 skill</div>}
           {filteredSkills.map((skill) => (
@@ -261,7 +272,6 @@ function App() {
                 <p>{skill.description}</p>
               </div>
               <div className="cell"><span>最后更新</span><strong>{skill.updatedLabel}</strong></div>
-              <div className="cell"><span>GitLab 路径</span><strong>{skill.repoPath.split("/").slice(-2).join("/")}</strong></div>
               <div className="cell"><span>下载</span><strong>{skill.downloads.all}</strong></div>
               <button className="row-action" type="button" aria-label={`查看 ${skill.name}`}><ArrowIcon /></button>
             </article>
@@ -283,12 +293,8 @@ function App() {
             <span className="tag">GitLab indexed</span>
           </div>
           <h2>{selected.name}</h2>
-          <p>{selected.description}</p>
+          <p className="detail-description">{selected.description}</p>
           <div className="command">
-            <span>可统计安装</span>
-            <code>{selected.trackedInstallCommand || selected.installCommand}</code>
-          </div>
-          <div className="command subtle">
             <span>原生 GitLab 安装</span>
             <code>{selected.installCommand}</code>
           </div>
@@ -296,6 +302,9 @@ function App() {
             <button className="primary" onClick={copyCommand} type="button">复制安装命令</button>
             <button className="secondary" onClick={downloadZip} type="button" aria-label="下载 zip">
               <DownloadIcon />
+            </button>
+            <button className="secondary" onClick={openGitLab} type="button" aria-label="打开 GitLab 仓库">
+              <ExternalLinkIcon />
             </button>
             <button
               className={`secondary ${selectedIsLiked ? "liked" : ""}`}
@@ -307,7 +316,7 @@ function App() {
             </button>
           </div>
           <div className="meta-grid">
-            <div className="meta"><span>GitLab 路径</span><strong>{selected.repoPath}</strong></div>
+            <a className="meta link-meta" href={gitLabWebUrl(selected.repoUrl, selected.repoPath)} target="_blank" rel="noreferrer"><span>GitLab 仓库</span><strong>{selected.repoPath}</strong></a>
             <div className="meta"><span>最后更新</span><strong>{selected.updatedLabel}</strong></div>
             <div className="meta"><span>下载</span><strong>{selected.downloads.all.toLocaleString()}</strong></div>
             <div className="meta"><span>点赞</span><strong>{selected.likes.toLocaleString()}</strong></div>
@@ -342,6 +351,10 @@ function LikeIcon() {
 
 function DownloadIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>;
+}
+
+function ExternalLinkIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7" /><path d="m10 14 11-11" /><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" /></svg>;
 }
 
 type ApiSkill = {
@@ -385,6 +398,7 @@ function fromApiSkill(skill: ApiSkill): Skill {
     description: skill.description,
     category: skill.category,
     repoPath: `${repoPathLabel(skill.source.repoUrl)}/${skill.source.skillDir}`,
+    repoUrl: skill.source.repoUrl,
     updatedAt: skill.updatedAt,
     updatedLabel: formatUpdatedAt(skill.updatedAt),
     installCommand: skill.installCommand,
@@ -393,6 +407,20 @@ function fromApiSkill(skill: ApiSkill): Skill {
     likes: skill.likes,
     color: colorForSlug(skill.slug)
   };
+}
+
+function gitLabWebUrl(repoUrl: string, repoPath: string) {
+  const withoutGitSuffix = repoUrl.replace(/\.git$/, "");
+  const sshMatch = withoutGitSuffix.match(/^[^@]+@([^:]+):(.+)$/);
+  if (sshMatch) {
+    return `https://${sshMatch[1]}/${sshMatch[2]}`;
+  }
+
+  try {
+    return new URL(withoutGitSuffix).toString();
+  } catch {
+    return repoPath.startsWith("http") ? repoPath : withoutGitSuffix;
+  }
 }
 
 function repoPathLabel(repoUrl: string) {
