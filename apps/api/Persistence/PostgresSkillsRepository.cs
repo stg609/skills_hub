@@ -339,18 +339,21 @@ public sealed class PostgresSkillsRepository : ISkillsRepository
         }
 
         // 中文注释：请求链路只原子递增总量；1d/7d 是会随时间自然过期的窗口值，由后台刷新任务统一维护。
-        await using var stats = new NpgsqlCommand("""
+        Downloads downloads;
+        await using (var stats = new NpgsqlCommand("""
             insert into skill_stats (skill_identity, downloads_all)
             values ($1, 1)
             on conflict (skill_identity) do update set
               downloads_all = skill_stats.downloads_all + 1,
               updated_at = now()
             returning downloads_1d, downloads_7d, downloads_all
-            """, connection, transaction);
-        stats.Parameters.AddWithValue(identity);
-        await using var reader = await stats.ExecuteReaderAsync(cancellationToken);
-        await reader.ReadAsync(cancellationToken);
-        var downloads = new Downloads(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2));
+            """, connection, transaction))
+        {
+            stats.Parameters.AddWithValue(identity);
+            await using var reader = await stats.ExecuteReaderAsync(cancellationToken);
+            await reader.ReadAsync(cancellationToken);
+            downloads = new Downloads(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2));
+        }
 
         await transaction.CommitAsync(cancellationToken);
         return downloads;
