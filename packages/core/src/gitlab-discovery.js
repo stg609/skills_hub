@@ -4,7 +4,7 @@ export function discoverSkillFiles(tree) {
   }
 
   return tree
-    .filter((item) => item?.type === "blob" && /(^|\/)SKILL\.md$/i.test(item.path ?? ""))
+    .filter((item) => item?.type === "blob" && isIndexableSkillPath(item.path ?? ""))
     .map((item) => {
       const skillFilePath = normalizePath(item.path);
       return {
@@ -13,6 +13,13 @@ export function discoverSkillFiles(tree) {
       };
     })
     .sort((left, right) => left.skillFilePath.localeCompare(right.skillFilePath));
+}
+
+function isIndexableSkillPath(path) {
+  const normalized = normalizePath(path);
+  if (!/(^|\/)SKILL\.md$/i.test(normalized)) return false;
+  const parts = normalized.split("/").filter(Boolean);
+  return parts.slice(0, -1).every((part) => !part.startsWith("."));
 }
 
 function normalizePath(path) {

@@ -12,7 +12,7 @@ public sealed class GitLabIndexer(GitLabClient gitlab, AppConfig config)
         await foreach (var project in EnumerateProjectsAsync(cancellationToken))
         {
             var tree = await gitlab.ListRepositoryTreeAsync(project.Id, project.DefaultBranch, "", config.GitLabRecursiveSkillDiscovery, cancellationToken);
-            foreach (var skillFile in tree.Where(item => item.Type == "blob" && item.Path.EndsWith("SKILL.md", StringComparison.OrdinalIgnoreCase)))
+            foreach (var skillFile in tree.Where(IsIndexableSkillFile))
             {
                 var markdown = await gitlab.GetRawFileAsync(project.Id, skillFile.Path, project.DefaultBranch, cancellationToken);
                 var metadata = SkillMarkdownParser.Parse(markdown);
@@ -93,7 +93,7 @@ public sealed class GitLabIndexer(GitLabClient gitlab, AppConfig config)
         var skills = new List<SkillRecord>();
         await foreach (var skillFile in gitlab.EnumerateRepositoryTreeAsync(project.Id, project.DefaultBranch, "", config.GitLabRecursiveSkillDiscovery, cancellationToken))
         {
-            if (skillFile.Type != "blob" || !skillFile.Path.EndsWith("SKILL.md", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!IsIndexableSkillFile(skillFile)) continue;
 
             var markdown = await gitlab.GetRawFileAsync(project.Id, skillFile.Path, project.DefaultBranch, cancellationToken);
             var metadata = SkillMarkdownParser.Parse(markdown);
@@ -110,5 +110,14 @@ public sealed class GitLabIndexer(GitLabClient gitlab, AppConfig config)
         }
 
         return skills;
+    }
+
+    private static bool IsIndexableSkillFile(GitLabTreeItem item)
+    {
+        if (item.Type != "blob" || !item.Path.EndsWith("SKILL.md", StringComparison.OrdinalIgnoreCase)) return false;
+        var normalized = item.Path.Replace('\\', '/').Trim('/');
+        var parts = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        // 中文注释：.agents、.claude 等隐藏目录通常是用户安装的第三方 skill，不应被公司 Hub 重新索引。
+        return parts.Length > 0 && parts[..^1].All(part => !part.StartsWith('.'));
     }
 }

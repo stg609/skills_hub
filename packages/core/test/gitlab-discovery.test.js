@@ -8,6 +8,8 @@ test("discovers every SKILL.md file in a multi-skill repository tree", () => {
     { type: "blob", path: "frontend/design/SKILL.md" },
     { type: "blob", path: "frontend/design/reference.md" },
     { type: "blob", path: "workflow/meeting/SKILL.md" },
+    { type: "blob", path: ".agents/installed/SKILL.md" },
+    { type: "blob", path: "src/.claude/copied/SKILL.md" },
     { type: "blob", path: "README.md" }
   ];
 
