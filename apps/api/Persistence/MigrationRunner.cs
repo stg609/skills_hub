@@ -19,9 +19,7 @@ public static class MigrationRunner
 
         try
         {
-            var migrationDir = Path.Combine(AppContext.BaseDirectory, "migrations");
-            if (!Directory.Exists(migrationDir))
-                migrationDir = Path.Combine(Directory.GetCurrentDirectory(), "apps", "api", "migrations");
+            var migrationDir = ResolveMigrationDir();
 
             foreach (var migrationPath in Directory.GetFiles(migrationDir, "*.sql").OrderBy(path => path, StringComparer.Ordinal))
             {
@@ -54,6 +52,28 @@ public static class MigrationRunner
             await using var unlockCommand = new NpgsqlCommand("select pg_advisory_unlock(hashtext('skills_hub_migrations'))", connection);
             await unlockCommand.ExecuteNonQueryAsync();
         }
+    }
+
+    private static string ResolveMigrationDir()
+    {
+        var currentDirectory = Directory.GetCurrentDirectory();
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "migrations"),
+            Path.Combine(currentDirectory, "migrations"),
+            Path.Combine(currentDirectory, "apps", "api", "migrations"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "migrations")
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var fullPath = Path.GetFullPath(candidate);
+            if (Directory.Exists(fullPath)) return fullPath;
+        }
+
+        // 中文注释：本地 dotnet run、发布后的容器入口、以及从 apps/api 目录直接运行时工作目录不同；找不到目录时把候选路径打出来方便部署排查。
+        throw new DirectoryNotFoundException(
+            "Could not find migrations directory. Checked: " + string.Join(", ", candidates.Select(Path.GetFullPath)));
     }
 
     private static async Task<bool> HasMigrationAsync(NpgsqlConnection connection, string version)
